@@ -1,0 +1,10 @@
+[
+  {
+    "win": "D:\\",
+    "linux": "/mnt/d/"
+  },
+  {
+    "win": "C:\\Users\\alice",
+    "linux": "/home/alice"
+  }
+]

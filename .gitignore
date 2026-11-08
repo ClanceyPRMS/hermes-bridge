@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────
+# 这里是「桥的运行数据」的忽略清单，不是普通的项目忽略表。
+# 桥目录 = 代码 + 你的私人数据（聊天库、记忆、技能）。代码进版本库，
+# 数据一律不进——推错一次就再也收不回来了。
+# ─────────────────────────────────────────────────────────────
+
+# 聊天库与项目库
+state.db
+state.db-wal
+state.db-shm
+projects.db
+projects.db-wal
+projects.db-shm
+
+# 合并用的临时库（历次 push/pull 的残骸，可能几十 MB 一个）
+.merge-*.db
+
+# 同步状态与配置
+manifest.json
+pathmap.json          # 各人自己填的路径表；模板见 pathmap.example.json
+.hermes-bridge
+
+# 私人内容
+memories/
+skills/
+cron/
+scripts/
+backups/
+
+# 保险箱（小分区内容，若被 clone 到同一棵树里）
+.hermes-anchor
+ANCHOR.json
+snapshots/
+profile/
+
+# Python / 编辑器 / 系统杂物
+__pycache__/
+*.py[cod]
+*.bak
+*.bak-*
+*.orig
+.DS_Store
+Thumbs.db
+*~
+.idea/
+.vscode/
+*.log

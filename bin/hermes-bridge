@@ -1,0 +1,39 @@
+#!/bin/sh
+# hermes-bridge 启动器（Linux / macOS）
+#
+# 桥放在另一块盘上时，路径每次挂载都可能变（/run/media/<用户>/<卷标>/...
+# 或 /mnt/d/HermesBridge），所以这个启动器先找桥、再交给 python3 跑。
+#
+# 装法：把本文件放进 $PATH，例如
+#   install -m 755 bin/hermes-bridge ~/.local/bin/hermes-bridge
+set -u
+
+run() {
+    _dir=$1
+    shift
+    exec python3 "$_dir/hermes-bridge.py" "$@"
+}
+
+# 1) 显式指定优先
+if [ -n "${HERMES_BRIDGE:-}" ] && [ -f "$HERMES_BRIDGE/hermes-bridge.py" ]; then
+    run "$HERMES_BRIDGE" "$@"
+fi
+
+# 2) 启动器旁边就是桥（仓库本身被 clone 成了桥目录）
+self=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ -f "$self/hermes-bridge.py" ]; then
+    run "$self" "$@"
+fi
+
+# 3) 常见挂载点
+for v in /run/media/*/*/HermesBridge /run/media/*/HermesBridge \
+         /mnt/*/HermesBridge /Volumes/*/HermesBridge; do
+    if [ -f "$v/hermes-bridge.py" ]; then
+        run "$v" "$@"
+    fi
+done
+
+echo "找不到 HermesBridge 桥目录。" >&2
+echo "  1) 先确认放着桥的那块盘挂上了（文件管理器里点一下）；" >&2
+echo "  2) 或者显式指定：HERMES_BRIDGE=/path/to/HermesBridge hermes-bridge $*" >&2
+exit 1
