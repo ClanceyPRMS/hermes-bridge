@@ -1054,7 +1054,38 @@ def sync_tree(src_root: Path, dst_root: Path, subdirs, dry=False, limit=None) ->
 
 
 # ---------------------------------------------------------------- 统计
+REQUIRED_TABLES = ("sessions", "messages")
+
+
+def _schema_problem(db_path: Path) -> str | None:
+    """这个库能不能当 Hermes 的 state.db 用。没问题返回 None。
+
+    新用户最常见的一次翻车：把随便一份 sqlite 库丢进桥目录，status 就甩一堆
+    `no such table: messages` 的 traceback。所以先查表再查内容。
+    """
+    try:
+        c = ro(db_path)
+    except sqlite3.Error as e:
+        return f"打不开这个库（{e}）"
+    try:
+        have = {r[0] for r in c.execute(
+            "select name from sqlite_master where type='table'")}
+    except sqlite3.Error as e:
+        return f"读不出表结构（{e}）"
+    finally:
+        c.close()
+    missing = [t for t in REQUIRED_TABLES if t not in have]
+    if missing:
+        return ("缺少表 " + ", ".join(missing)
+                + " —— 这不像 Hermes 的 state.db，或者版本差得太远。\n"
+                "  确认一下：桥目录里的 state.db 应该是 push 生出来的，别自己放别的库进去。")
+    return None
+
+
 def counts(db_path: Path) -> dict:
+    bad = _schema_problem(db_path)
+    if bad:
+        raise SystemExit(f"{db_path}\n  {bad}")
     c = ro(db_path)
     try:
         n_msg = c.execute("select count(*) from messages").fetchone()[0]
@@ -1068,6 +1099,10 @@ def counts(db_path: Path) -> dict:
 
 
 def diff_counts(local_db: Path, vault_db: Path) -> dict:
+    for p in (local_db, vault_db):
+        bad = _schema_problem(p)
+        if bad:
+            raise SystemExit(f"{p}\n  {bad}")
     a, v = ro(local_db), ro(vault_db)
     try:
         sa = {r[0] for r in a.execute("select id from sessions")}
