@@ -97,6 +97,31 @@ Windows 用仓库里的 `hermes-bridge.cmd`（会自动去找 Hermes 自带的 P
 D:\HermesBridge\hermes-bridge.cmd status
 ```
 
+### 桥已经跑起来了，只想接上这个仓库
+
+`git clone` 到非空目录会失败。在**已有的桥目录**里这么做（只签出代码，数据一个字节不碰）：
+
+```bash
+cd /mnt/d/HermesBridge
+git init -b main
+git remote add origin https://github.com/ClanceyPRMS/hermes-bridge.git
+git fetch --depth=1 origin main
+git checkout -f FETCH_HEAD -- \
+  .gitignore LICENSE README.md pathmap.example.json bin \
+  hermes-bridge.py hermes-bridge.cmd \
+  rebind_imported_local.py verify_sync_no_loss.py
+```
+
+之后 `git status` 只会看到这几个代码文件；`state.db`、`memories/`、`pathmap.json`、`manifest.json`
+全在 `.gitignore` 里，`git` 看不见它们。
+
+> **NTFS 上的提醒**：桥放在 NTFS 分区时，Linux 下没有真正的 Unix 权限位，`git status` 会出现大量
+> "mode change" 噪音，可执行位也可能丢。正经开发时把仓库放在 ext4（如 `~/projects/hermes-bridge`），
+> 改完再把代码文件拷进桥目录——桥目录那份只当「运行用的副本」。
+
+> **Hermes 有多个 profile 时**：自动探测会拒绝猜，`status` 会列出候选并要你指定。设一次
+> `HERMES_PROFILE=<名字>`（Windows：`setx HERMES_PROFILE <名字>`）或每次加 `--profile <名字>`。
+
 **3. 开始用**：
 
 ```bash
